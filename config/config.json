@@ -1,0 +1,10 @@
+{
+    "channel_secret":"",
+    "channel_access_token":"",
+    "mongoDB_host":"127.0.0.1",
+    "mongoDB_port": "27017",
+    "mongoDB_username":"root",
+    "mongoDB_password": "qwe123",
+    "mongoDB_database": "test_line_dev",
+    "mongoDB_collection": "messages"
+}
