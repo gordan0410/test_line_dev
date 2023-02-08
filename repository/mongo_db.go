@@ -7,22 +7,19 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var conn *mongo.Client
-
 type MongoDBRepo interface {
-	Get(req primitive.D) (bson.D, error)
-	GetAll(req primitive.D, limit, offset int64) ([]bson.D, error)
+	Get(req map[string]interface{}) (map[string]interface{}, error)
+	GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error)
 	Create(req interface{}) (string, error)
 	Close()
 }
 
-type MongoDB struct {
+type mongoDB struct {
 	ctx        context.Context
 	conn       *mongo.Client
 	database   string
@@ -34,9 +31,9 @@ func NewMogoDB(ctx context.Context, database, collection string) MongoDBRepo {
 	port := viper.GetString("mongoDB_port")
 	user := viper.GetString("mongoDB_username")
 	pass := viper.GetString("mongoDB_password")
-	conn, _ = mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+user+":"+pass+"@"+host+":"+port))
+	conn, _ := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://"+user+":"+pass+"@"+host+":"+port))
 
-	return &MongoDB{
+	return &mongoDB{
 		ctx:        ctx,
 		conn:       conn,
 		database:   database,
@@ -44,7 +41,7 @@ func NewMogoDB(ctx context.Context, database, collection string) MongoDBRepo {
 	}
 }
 
-func (m *MongoDB) Get(req primitive.D) (bson.D, error) {
+func (m *mongoDB) Get(req map[string]interface{}) (map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -52,7 +49,7 @@ func (m *MongoDB) Get(req primitive.D) (bson.D, error) {
 		return nil, errorHandling("Get", err)
 	}
 
-	var result bson.D
+	var result primitive.M
 	err := m.conn.Database(m.database).Collection(m.collection).FindOne(ctx, req).Decode(&result)
 	if err != nil {
 		return nil, errorHandling("Get", err)
@@ -61,7 +58,7 @@ func (m *MongoDB) Get(req primitive.D) (bson.D, error) {
 	return result, nil
 }
 
-func (m *MongoDB) GetAll(req primitive.D, limit, offset int64) ([]bson.D, error) {
+func (m *mongoDB) GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -77,9 +74,9 @@ func (m *MongoDB) GetAll(req primitive.D, limit, offset int64) ([]bson.D, error)
 		return nil, errorHandling("GetAll", err)
 	}
 
-	var result []bson.D
+	var result []map[string]interface{}
 	for cur.Next(ctx) {
-		var res bson.D
+		var res primitive.M
 		err := cur.Decode(&res)
 		if err != nil {
 			return nil, errorHandling("GetAll", err)
@@ -93,7 +90,7 @@ func (m *MongoDB) GetAll(req primitive.D, limit, offset int64) ([]bson.D, error)
 	return result, nil
 }
 
-func (m *MongoDB) Create(req interface{}) (string, error) {
+func (m *mongoDB) Create(req interface{}) (string, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -101,7 +98,7 @@ func (m *MongoDB) Create(req interface{}) (string, error) {
 		return "", errorHandling("Create", err)
 	}
 
-	res, err := conn.Database(m.database).Collection(m.collection).InsertOne(ctx, req)
+	res, err := m.conn.Database(m.database).Collection(m.collection).InsertOne(ctx, req)
 	if err != nil {
 		return "", errorHandling("Create", err)
 	}
@@ -114,11 +111,11 @@ func (m *MongoDB) Create(req interface{}) (string, error) {
 	return oID.String(), nil
 }
 
-func (m *MongoDB) Close() {
+func (m *mongoDB) Close() {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
-	if err := conn.Disconnect(ctx); err != nil {
+	if err := m.conn.Disconnect(ctx); err != nil {
 		errorHandling("Close", err)
 	}
 }

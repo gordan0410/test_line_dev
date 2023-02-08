@@ -2,10 +2,16 @@ package cmd
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 
+	"test_line_dev/app"
+	"test_line_dev/repository"
+	"test_line_dev/server"
+
+	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -38,5 +44,17 @@ var serverCmd = &cobra.Command{
 			viper.AddConfigPath(wd + "/config/")
 			viper.ReadInConfig()
 		}
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		dataBase := viper.GetString("mongoDB_database")
+		collection := viper.GetString("mongoDB_collection")
+		dbRepo := repository.NewMogoDB(ctx, dataBase, collection)
+		defer dbRepo.Close()
+
+		router := gin.Default()
+		receiverApp := app.NewMessageApp(dbRepo)
+		server := server.NewServer(router, receiverApp)
+		server.Run()
 	},
 }
