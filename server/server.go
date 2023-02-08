@@ -24,7 +24,6 @@ func NewServer(r *gin.Engine, receiver app.MessageApp) *Server {
 }
 
 func (s *Server) Run() error {
-	// authToken := viper.GetString("ngrok_access_token")
 	tun, err := ngrok.Listen(context.Background(),
 		config.HTTPEndpoint(),
 	)

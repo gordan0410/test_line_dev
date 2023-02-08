@@ -12,6 +12,7 @@ import (
 	"test_line_dev/server"
 
 	"github.com/gin-gonic/gin"
+	"github.com/line/line-bot-sdk-go/linebot"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -52,8 +53,15 @@ var serverCmd = &cobra.Command{
 		dbRepo := repository.NewMogoDB(ctx, dataBase, collection)
 		defer dbRepo.Close()
 
+		secret := viper.GetString("channel_secret")
+		token := viper.GetString("channel_access_token")
+		bot, err := linebot.New(secret, token)
+		if err != nil {
+			ErroHandle(err)
+			return
+		}
+		receiverApp := app.NewMessageApp(dbRepo, bot)
 		router := gin.Default()
-		receiverApp := app.NewMessageApp(dbRepo)
 		server := server.NewServer(router, receiverApp)
 		server.Run()
 	},
