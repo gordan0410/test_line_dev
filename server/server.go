@@ -2,11 +2,12 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"test_line_dev/app"
 
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 	"golang.ngrok.com/ngrok"
 	"golang.ngrok.com/ngrok/config"
 )
@@ -30,7 +31,15 @@ func (s *Server) Run() error {
 	if err != nil {
 		return err
 	}
-	log.Info().Msgf("libot webhook url : %s", tun.URL()+"/linebot")
+
+	f, err := os.Create("urls.txt")
+	if err != nil {
+		return err
+	}
+	msg := fmt.Sprintf("linebot webhook url:\n%s\nlinebot api:\n%s\n", tun.URL()+"/linebot", tun.URL()+"/linebot/message")
+	_, err = f.Write([]byte(msg))
+	f.Close()
+
 	r := s.Rounters()
 	err = r.RunListener(tun)
 	if err != nil {
