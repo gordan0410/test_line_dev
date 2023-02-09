@@ -10,6 +10,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+var contentPerPageMax = 10
+
 type sendMsgReq struct {
 	UserID string `bind:"required" json:"user_id"`
 	Msg    string `bind:"required" json:"msg"`
@@ -77,6 +79,9 @@ func (s *Server) getAllMsgByUserID() gin.HandlerFunc {
 				if err != nil {
 					tool.ErroHandle("server", "Server", "getAllMsgByUserID", err)
 					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				}
+				if contentPerPage > contentPerPageMax {
+					contentPerPage = contentPerPageMax
 				}
 			}
 			nowPageRaw := c.Query("page")

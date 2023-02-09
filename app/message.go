@@ -1,8 +1,6 @@
 package app
 
 import (
-	"encoding/json"
-
 	"test_line_dev/tool"
 
 	"github.com/line/line-bot-sdk-go/linebot"
@@ -34,10 +32,10 @@ type DBsaveMsg struct {
 }
 
 type GetAllMsgByUserIDRes struct {
-	UserID    string   `json:"user_id"`
-	Messages  []string `json:"messages"`
-	TotalPage int      `json:"total_page"`
-	NowPage   int      `json:"now_page"`
+	UserID    string        `json:"user_id"`
+	Messages  []interface{} `json:"messages"`
+	TotalPage int           `json:"total_page"`
+	NowPage   int           `json:"now_page"`
 }
 
 func NewMessageApp(db DBRepo, bot *linebot.Client) MessageApp {
@@ -102,14 +100,9 @@ func (r *messageApp) GetAllMsgByUserID(userID string, contentPerPage, page int) 
 			return GetAllMsgByUserIDRes{}, err
 		}
 
-		var result []string
-		for _, v := range datas {
-			data, err := json.Marshal(v["msg"])
-			if err != nil {
-				tool.ErroHandle("app", "MessageApp", "GetAllMsgByUserID", err)
-				return GetAllMsgByUserIDRes{}, err
-			}
-			result = append(result, string(data))
+		result := make([]interface{}, len(datas))
+		for i, v := range datas {
+			result[i] = v["msg"]
 		}
 		return GetAllMsgByUserIDRes{
 			UserID:    userID,

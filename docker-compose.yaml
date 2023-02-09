@@ -21,15 +21,15 @@ services:
       ME_CONFIG_MONGODB_ADMINPASSWORD: qwe123
       ME_CONFIG_MONGODB_URL: mongodb://root:qwe123@mongoDB:27017/
 
-  app:
-      build:
-        dockerfile: ./DockerFile
-        context: .
-      command: tail -F /dev/nul
-      depends_on:
-        - mongoDB
-      ports:
-        - 9012:8081
+  # app:
+  #     build:
+  #       dockerfile: ./DockerFile
+  #       context: .
+  #     command: tail -F /dev/nul
+  #     depends_on:
+  #       - mongoDB
+  #     ports:
+  #       - 9012:8081
 
 
 volumes:
