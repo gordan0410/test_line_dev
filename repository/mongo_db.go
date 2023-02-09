@@ -15,6 +15,7 @@ import (
 type MongoDBRepo interface {
 	Get(req map[string]interface{}) (map[string]interface{}, error)
 	GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error)
+	CountDocuments(req map[string]interface{}) (int, error)
 	Create(req interface{}) (string, error)
 	Close()
 }
@@ -109,6 +110,22 @@ func (m *mongoDB) Create(req interface{}) (string, error) {
 	}
 
 	return oID.String(), nil
+}
+
+func (m *mongoDB) CountDocuments(req map[string]interface{}) (int, error) {
+	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
+	defer cancel()
+
+	if err := m.conn.Ping(ctx, nil); err != nil {
+		return 0, errorHandling("Create", err)
+	}
+
+	res, err := m.conn.Database(m.database).Collection(m.collection).CountDocuments(ctx, req)
+	if err != nil {
+		return 0, errorHandling("Create", err)
+	}
+
+	return int(res), nil
 }
 
 func (m *mongoDB) Close() {

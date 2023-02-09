@@ -1,7 +1,9 @@
 package server
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"test_line_dev/tool"
 
@@ -19,7 +21,7 @@ func (s *Server) index() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) receiver() gin.HandlerFunc {
+func (s *Server) receive() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		events, err := s.messageApp.GetBot().ParseRequest(c.Request)
 		if err != nil {
@@ -40,7 +42,7 @@ func (s *Server) receiver() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) sendMsg() gin.HandlerFunc {
+func (s *Server) send() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req sendMsgReq
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -57,5 +59,45 @@ func (s *Server) sendMsg() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, req)
+	}
+}
+
+func (s *Server) getAllMsgByUserID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID := c.Query("user_id")
+		if userID != "" {
+			var err error
+			// default
+			contentPerPage := 5
+			nowPage := 1
+
+			contentPerPageRaw := c.Query("content_per_page")
+			if contentPerPageRaw != "" {
+				contentPerPage, err = strconv.Atoi(contentPerPageRaw)
+				if err != nil {
+					tool.ErroHandle("server", "Server", "getAllMsgByUserID", err)
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				}
+			}
+			nowPageRaw := c.Query("page")
+			if nowPageRaw != "" {
+				nowPage, err = strconv.Atoi(nowPageRaw)
+				if err != nil {
+					tool.ErroHandle("server", "Server", "getAllMsgByUserID", err)
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				}
+			}
+
+			datas, err := s.messageApp.GetAllMsgByUserID(userID, contentPerPage, nowPage)
+			if err != nil {
+				tool.ErroHandle("server", "Server", "getAllMsgByUserID", err)
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
+			c.JSON(http.StatusOK, datas)
+		} else {
+			err := errors.New("user_id not found")
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 	}
 }
