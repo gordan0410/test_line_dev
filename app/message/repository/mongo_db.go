@@ -6,19 +6,13 @@ import (
 	"fmt"
 	"time"
 
+	"test_line_dev/domain"
+
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-type MongoDBRepo interface {
-	Get(req map[string]interface{}) (map[string]interface{}, error)
-	GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error)
-	CountDocuments(req map[string]interface{}) (int, error)
-	Create(req interface{}) (string, error)
-	Close()
-}
 
 type mongoDB struct {
 	ctx        context.Context
@@ -27,7 +21,7 @@ type mongoDB struct {
 	collection string
 }
 
-func NewMogoDB(ctx context.Context, database, collection string) MongoDBRepo {
+func NewMogoDB(ctx context.Context, database, collection string) domain.MessageRepo {
 	host := viper.GetString("mongoDB_host")
 	port := viper.GetString("mongoDB_port")
 	user := viper.GetString("mongoDB_username")
@@ -42,7 +36,7 @@ func NewMogoDB(ctx context.Context, database, collection string) MongoDBRepo {
 	}
 }
 
-func (m *mongoDB) Get(req map[string]interface{}) (map[string]interface{}, error) {
+func (m *mongoDB) Get(req domain.GetMessage) (map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -59,7 +53,7 @@ func (m *mongoDB) Get(req map[string]interface{}) (map[string]interface{}, error
 	return result, nil
 }
 
-func (m *mongoDB) GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error) {
+func (m *mongoDB) GetAll(req domain.GetMessage, limit, offset int64) ([]map[string]interface{}, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -91,7 +85,7 @@ func (m *mongoDB) GetAll(req map[string]interface{}, limit, offset int64) ([]map
 	return result, nil
 }
 
-func (m *mongoDB) Create(req interface{}) (string, error) {
+func (m *mongoDB) Create(req domain.CreateMessage) (string, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 
@@ -112,7 +106,7 @@ func (m *mongoDB) Create(req interface{}) (string, error) {
 	return oID.String(), nil
 }
 
-func (m *mongoDB) CountDocuments(req map[string]interface{}) (int, error) {
+func (m *mongoDB) CountDocuments(req domain.GetMessage) (int, error) {
 	ctx, cancel := context.WithTimeout(m.ctx, 5*time.Second)
 	defer cancel()
 

@@ -1,44 +1,18 @@
-package app
+package usecase
 
 import (
+	"test_line_dev/domain"
 	"test_line_dev/tool"
 
 	"github.com/line/line-bot-sdk-go/linebot"
 )
 
-type DBRepo interface {
-	Get(req map[string]interface{}) (map[string]interface{}, error)
-	GetAll(req map[string]interface{}, limit, offset int64) ([]map[string]interface{}, error)
-	Create(req interface{}) (string, error)
-	CountDocuments(req map[string]interface{}) (int, error)
-	Close()
-}
-
-type MessageApp interface {
-	GetBot() *linebot.Client
-	Receive(events []*linebot.Event) error
-	Send(userID, msg string) error
-	GetAllMsgByUserID(userID string, contentPerPage, page int) (GetAllMsgByUserIDRes, error)
-}
-
 type messageApp struct {
-	dbConn DBRepo
+	dbConn domain.MessageRepo
 	bot    *linebot.Client
 }
 
-type DBsaveMsg struct {
-	UserID string
-	Msg    linebot.Message
-}
-
-type GetAllMsgByUserIDRes struct {
-	UserID    string        `json:"user_id"`
-	Messages  []interface{} `json:"messages"`
-	TotalPage int           `json:"total_page"`
-	NowPage   int           `json:"now_page"`
-}
-
-func NewMessageApp(db DBRepo, bot *linebot.Client) MessageApp {
+func NewMessageApp(db domain.MessageRepo, bot *linebot.Client) domain.MessageApp {
 	return &messageApp{
 		dbConn: db,
 		bot:    bot,
@@ -52,7 +26,7 @@ func (r *messageApp) GetBot() *linebot.Client {
 func (r *messageApp) Receive(events []*linebot.Event) error {
 	for _, event := range events {
 		if event.Type == linebot.EventTypeMessage {
-			saveData := DBsaveMsg{
+			saveData := domain.CreateMessage{
 				UserID: event.Source.UserID,
 				Msg:    event.Message,
 			}
@@ -75,15 +49,15 @@ func (r *messageApp) Send(userID, msg string) error {
 	return nil
 }
 
-func (r *messageApp) GetAllMsgByUserID(userID string, contentPerPage, page int) (GetAllMsgByUserIDRes, error) {
-	req := map[string]interface{}{
-		"userid": userID,
+func (r *messageApp) GetAllMsgByUserID(userID string, contentPerPage, page int) (res domain.GetAllMsgByUserIDRes, err error) {
+	req := domain.GetMessage{
+		UserID: userID,
 	}
 
 	allDataCounts, err := r.dbConn.CountDocuments(req)
 	if err != nil {
 		tool.ErroHandle("app", "MessageApp", "GetAllMsgByUserID", err)
-		return GetAllMsgByUserIDRes{}, err
+		return res, err
 	}
 
 	totalPage := allDataCounts / contentPerPage
@@ -97,20 +71,20 @@ func (r *messageApp) GetAllMsgByUserID(userID string, contentPerPage, page int) 
 		datas, err := r.dbConn.GetAll(req, int64(contentPerPage), int64(offset))
 		if err != nil {
 			tool.ErroHandle("app", "MessageApp", "GetAllMsgByUserID", err)
-			return GetAllMsgByUserIDRes{}, err
+			return res, err
 		}
 
 		result := make([]interface{}, len(datas))
 		for i, v := range datas {
 			result[i] = v["msg"]
 		}
-		return GetAllMsgByUserIDRes{
+		return domain.GetAllMsgByUserIDRes{
 			UserID:    userID,
 			Messages:  result,
 			TotalPage: totalPage,
 			NowPage:   page,
-		}, nil
+		}, err
 	}
 
-	return GetAllMsgByUserIDRes{}, err
+	return res, err
 }

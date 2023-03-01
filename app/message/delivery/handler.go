@@ -1,4 +1,4 @@
-package server
+package delivery
 
 import (
 	"errors"
@@ -17,13 +17,13 @@ type sendMsgReq struct {
 	Msg    string `bind:"required" json:"msg"`
 }
 
-func (s *Server) index() gin.HandlerFunc {
+func (s *Server) Index() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.String(200, "123")
 	}
 }
 
-func (s *Server) receive() gin.HandlerFunc {
+func (s *Server) Receive() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		events, err := s.messageApp.GetBot().ParseRequest(c.Request)
 		if err != nil {
@@ -44,7 +44,7 @@ func (s *Server) receive() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) send() gin.HandlerFunc {
+func (s *Server) Send() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req sendMsgReq
 		if err := c.ShouldBindJSON(&req); err != nil {
@@ -64,7 +64,7 @@ func (s *Server) send() gin.HandlerFunc {
 	}
 }
 
-func (s *Server) getAllMsgByUserID() gin.HandlerFunc {
+func (s *Server) GetAllMsgByUserID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID := c.Query("user_id")
 		if userID != "" {

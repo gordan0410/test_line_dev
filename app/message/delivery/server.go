@@ -1,11 +1,11 @@
-package server
+package delivery
 
 import (
 	"context"
 	"fmt"
 	"os"
 
-	"test_line_dev/app"
+	"test_line_dev/domain"
 
 	"github.com/gin-gonic/gin"
 	"golang.ngrok.com/ngrok"
@@ -14,13 +14,13 @@ import (
 
 type Server struct {
 	router     *gin.Engine
-	messageApp app.MessageApp
+	messageApp domain.MessageApp
 }
 
-func NewServer(r *gin.Engine, receiver app.MessageApp) *Server {
+func NewServer(r *gin.Engine, me domain.MessageApp) *Server {
 	return &Server{
 		router:     r,
-		messageApp: receiver,
+		messageApp: me,
 	}
 }
 

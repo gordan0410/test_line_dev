@@ -7,9 +7,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"test_line_dev/app"
-	"test_line_dev/repository"
-	"test_line_dev/server"
+	"test_line_dev/app/message/delivery"
+	"test_line_dev/app/message/repository"
+	"test_line_dev/app/message/usecase"
 
 	"github.com/gin-gonic/gin"
 	"github.com/line/line-bot-sdk-go/linebot"
@@ -60,9 +60,10 @@ var serverCmd = &cobra.Command{
 			ErroHandle(err)
 			return
 		}
-		receiverApp := app.NewMessageApp(dbRepo, bot)
+		messageApp := usecase.NewMessageApp(dbRepo, bot)
+
 		router := gin.Default()
-		server := server.NewServer(router, receiverApp)
+		server := delivery.NewServer(router, messageApp)
 		server.Run()
 	},
 }
