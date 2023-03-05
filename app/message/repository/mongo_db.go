@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"test_line_dev/domain"
+	"test_line_dev/app/domain"
 
 	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson/primitive"

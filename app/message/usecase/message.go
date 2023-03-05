@@ -1,8 +1,8 @@
 package usecase
 
 import (
-	"test_line_dev/domain"
-	"test_line_dev/tool"
+	"test_line_dev/app/domain"
+	"test_line_dev/app/tool"
 
 	"github.com/line/line-bot-sdk-go/linebot"
 )

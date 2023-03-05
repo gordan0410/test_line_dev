@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"test_line_dev/domain"
+	"test_line_dev/app/domain"
 
 	"github.com/gin-gonic/gin"
 	"golang.ngrok.com/ngrok"
